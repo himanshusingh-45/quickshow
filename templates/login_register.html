@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Login or Register - TicketAdda{% endblock %}
+
+{% block content %}
+<!-- Background -->
+<div class="auth-page-background"></div>
+
+<div class="auth-container">
+  <div class="auth-box">
+
+    <!-- Django Messages -->
+    {% if messages %}
+      <div class="messages">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- ================= LOGIN FORM ================= -->
+    <div id="login-form" class="form-container {% if register_form.errors %}hidden{% endif %}">
+      <h2>Welcome Back!</h2>
+      <p>Login to continue your movie journey.</p>
+
+      <form method="POST" action="{% url 'login_register' %}">
+        {% csrf_token %}
+        {% if login_form.non_field_errors %}
+          <div class="form-errors">
+            {% for error in login_form.non_field_errors %}
+              <p>{{ error }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <div class="input-group">
+          <i class="fas fa-user left-icon" aria-hidden="true"></i>
+          {{ login_form.username }}
+        </div>
+
+        <!-- NOTE: has-toggle class added so input padding increases on right -->
+        <div class="input-group has-toggle">
+          <i class="fas fa-lock left-icon" aria-hidden="true"></i>
+          {{ login_form.password }}
+          <!-- use id_for_label to get the field id rendered by Django; fallback handled in JS -->
+          <i class="fas fa-eye toggle-password" data-target="{{ login_form.password.id_for_label }}" role="button" aria-label="Toggle password visibility"></i>
+        </div>
+
+        <button type="submit" name="login" class="auth-btn">Login</button>
+      </form>
+
+      <p class="toggle-link">Don't have an account? 
+        <a href="#" id="show-register">Sign Up</a>
+      </p>
+    </div>
+
+    <!-- ================= REGISTER FORM ================= -->
+    <div id="register-form" class="form-container {% if not register_form.errors %}hidden{% endif %}">
+      <h2>Create Account</h2>
+      <p>Sign up to start booking your favorite movies.</p>
+
+      <form method="POST" action="{% url 'login_register' %}">
+        {% csrf_token %}
+        {% if register_form.errors %}
+          <div class="form-errors">
+            {% for field in register_form %}
+              {% for error in field.errors %}
+                <p>{{ error }}</p>
+              {% endfor %}
+            {% endfor %}
+            {% for error in register_form.non_field_errors %}
+              <p>{{ error }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <div class="input-group">
+          <i class="fas fa-user left-icon" aria-hidden="true"></i>
+          {{ register_form.username }}
+        </div>
+        <div class="input-group">
+          <i class="fas fa-envelope left-icon" aria-hidden="true"></i>
+          {{ register_form.email }}
+        </div>
+        <div class="input-group">
+          <i class="fas fa-phone left-icon" aria-hidden="true"></i>
+          {{ register_form.mobile_no }}
+        </div>
+
+        <div class="input-group has-toggle">
+          <i class="fas fa-lock left-icon" aria-hidden="true"></i>
+          {{ register_form.password1 }}
+          <i class="fas fa-eye toggle-password" data-target="{{ register_form.password1.id_for_label }}" role="button" aria-label="Toggle password visibility"></i>
+        </div>
+
+        <div class="input-group has-toggle">
+          <i class="fas fa-lock left-icon" aria-hidden="true"></i>
+          {{ register_form.password2 }}
+          <i class="fas fa-eye toggle-password" data-target="{{ register_form.password2.id_for_label }}" role="button" aria-label="Toggle password visibility"></i>
+        </div>
+
+        <button type="submit" name="register" class="auth-btn">Sign Up</button>
+      </form>
+
+      <p class="toggle-link">Already have an account? 
+        <a href="#" id="show-login">Login</a>
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const loginForm = document.getElementById('login-form');
+  const registerForm = document.getElementById('register-form');
+
+  // Toggle between login and register
+  document.getElementById('show-register')?.addEventListener('click', e => {
+    e.preventDefault();
+    loginForm.classList.add('hidden');
+    registerForm.classList.remove('hidden');
+  });
+  document.getElementById('show-login')?.addEventListener('click', e => {
+    e.preventDefault();
+    registerForm.classList.add('hidden');
+    loginForm.classList.remove('hidden');
+  });
+
+  // Password visibility toggle (robust: finds by id or by name fallback)
+  document.querySelectorAll('.toggle-password').forEach(icon => {
+    icon.addEventListener('click', (e) => {
+      e.preventDefault();
+
+      // target id from data attribute (expected to be the input id)
+      const targetId = icon.getAttribute('data-target') || '';
+      // try by id first
+      let input = document.getElementById(targetId);
+
+      // fallback: try to find an input inside same .input-group
+      if (!input) {
+        const group = icon.closest('.input-group');
+        if (group) input = group.querySelector('input[type="password"], input');
+      }
+
+      // fallback 2: try to find by name (strip leading '#id_' if any)
+      if (!input && targetId) {
+        const name = targetId.replace(/^id_/, '');
+        input = document.querySelector(`input[name="${name}"]`);
+      }
+
+      if (!input) return;
+
+      // toggle type
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash', 'active');
+      } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash', 'active');
+        icon.classList.add('fa-eye');
+      }
+
+      // ensure input stays focused so user can continue typing
+      input.focus();
+
+      // move caret to end (useful when input.value present)
+      try {
+        const val = input.value;
+        input.setSelectionRange(val.length, val.length);
+      } catch (err) { /* ignore for inputs that don't support selection */ }
+    });
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Select Seats - TicketAdda{{ movie.title }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/seats.css' %}" />
+
+<style>
+/* Sidebar & seating layout styles (concise) */
+.timings-container {
+  width: 260px;
+  background: #111;
+  padding: 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+  height: fit-content;
+  max-height: 520px;
+  overflow-y: auto;
+  position: sticky;
+  top: 90px;
+}
+.timings-container h2 { color:#fff; margin:0 0 12px 0; font-size:1.15rem;}
+#timings-list { display:flex; flex-direction:column; gap:8px; }
+
+.time-slot {
+  padding:10px 12px;
+  background:#1b1b1b;
+  border-radius:8px;
+  color:#cfcfcf;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  border:1px solid rgba(255,255,255,0.06);
+}
+.time-slot.active { background:#e50914; color:#fff; border-color:#e50914; transform:scale(1.02); }
+.time-slot .meta { font-size:0.95rem; color:inherit; }
+
+.seat-selection-page { display:flex; gap:36px; max-width:1200px; margin:20px auto; padding:12px; }
+.seating-chart-container {
+  flex:1;
+  background:linear-gradient(#0f0f0f,#141414);
+  padding:20px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.06);
+}
+.screen-text { color:#bfbfbf; text-align:center; margin-bottom:12px; }
+.checkout-btn { background:#e50914; color:#fff; padding:12px 18px; border-radius:24px; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:8px; }
+.checkout-btn.disabled { opacity:0.5; pointer-events:none; }
+.seating-grid { margin-top:22px; }
+
+/* small responsive tweak */
+@media (max-width: 900px) {
+  .seat-selection-page { flex-direction:column; padding:8px; }
+  .timings-container { position:relative; top:auto; width:100%; max-height:220px; }
+}
+
+/* styles used by script helpers */
+.seat-booked { opacity: 0.35 !important; pointer-events: none !important; }
+.seat.occupied { opacity: 0.35 !important; pointer-events: none !important; }
+</style>
+
+<div class="seat-selection-page">
+  <!-- Timings Sidebar -->
+  <aside class="timings-container" aria-label="Available Timings">
+    <h2>Available Timings</h2>
+    <div id="timings-list" role="list">
+      {% if upcoming_shows %}
+        {% for s in upcoming_shows %}
+          <div class="time-slot {% if forloop.first %}active{% endif %}" data-show-id="{{ s.id }}" role="listitem" tabindex="0">
+            <i class="far fa-clock"></i>
+            <div class="meta">{{ s.show_date|date:"M j" }} • {{ s.show_time|time:"g:i A" }}</div>
+            <div style="margin-left:auto;font-weight:700;color:inherit;">${{ s.price|floatformat:2 }}</div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="time-slot no-shows active" aria-disabled="true" style="background:#e50914;color:white;">
+          <span>No shows</span>
+        </div>
+      {% endif %}
+    </div>
+  </aside>
+
+  <!-- Seating Chart -->
+  <main class="seating-chart-container" aria-labelledby="select-seat-title">
+    <h1 id="select-seat-title" style="color:#fff;margin:0 0 8px 0;">Select your seat</h1>
+    <p class="screen-text">SCREEN SIDE</p>
+
+    <div class="seating-grid" id="seating-grid" aria-label="Seating chart"></div>
+
+    <div style="margin-top:18px;text-align:center;">
+      <a id="checkout-link" class="checkout-btn" href="#" role="button">
+        Proceed to Checkout <i class="fas fa-arrow-right"></i>
+      </a>
+    </div>
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{% static 'js/seats.js' %}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const checkoutLink = document.getElementById('checkout-link');
+  const timingsList = document.getElementById('timings-list');
+
+  // Auto-select the first real show if nothing is active (not a placeholder)
+  (function autoSelectFirstShow() {
+    if (!timingsList) return;
+    const realSlots = Array.from(timingsList.querySelectorAll('.time-slot:not(.no-shows)'));
+    if (realSlots.length === 0) {
+      checkoutLink.classList.add('disabled');
+      checkoutLink.setAttribute('aria-disabled', 'true');
+      return;
+    }
+    const active = timingsList.querySelector('.time-slot.active:not(.no-shows)');
+    if (!active && realSlots.length > 0) {
+      realSlots[0].classList.add('active');
+      checkoutLink.classList.remove('disabled');
+      checkoutLink.removeAttribute('aria-disabled');
+    }
+  })();
+
+  // helpers (also provided by seats.js)
+  function getSelectedSeatsFallback() {
+    return Array.from(document.querySelectorAll('.seat.selected')).map(s => (s.dataset.seatId || s.textContent).trim()).filter(Boolean);
+  }
+  function getActiveShowFallback() {
+    const slot = document.querySelector('#timings-list .time-slot.active:not(.no-shows)');
+    if (!slot) return null;
+    return { showId: (slot.dataset.showId || '').toString(), showText: slot.querySelector('.meta') ? slot.querySelector('.meta').innerText.trim() : '' };
+  }
+
+  function getSelectedSeats() {
+    if (window.getSelectedSeats && typeof window.getSelectedSeats === 'function') {
+      try { const arr = window.getSelectedSeats(); if (Array.isArray(arr)) return arr; } catch(e){ console.warn(e); }
+    }
+    return getSelectedSeatsFallback();
+  }
+  function getActiveShow() {
+    if (window.getActiveShow && typeof window.getActiveShow === 'function') {
+      try { const o = window.getActiveShow(); if (o && o.showId !== undefined) return o; } catch(e){ console.warn(e); }
+    }
+    return getActiveShowFallback();
+  }
+
+  // Debug helpers you asked for — they print counts/values to console:
+  console.log('timing slots count =>', document.querySelectorAll('#timings-list .time-slot').length);
+  console.log('selected seats =>', window.getSelectedSeats && window.getSelectedSeats());
+  console.log('active show =>', window.getActiveShow && window.getActiveShow());
+
+  // Clicking the Proceed button
+  checkoutLink.addEventListener('click', function (e) {
+    e.preventDefault();
+
+    if (checkoutLink.classList.contains('disabled')) {
+      Swal.fire({ icon: 'info', title: 'No shows available', text: 'This movie currently has no scheduled shows.' });
+      return;
+    }
+
+    const seats = getSelectedSeats();
+    if (!seats || seats.length === 0) {
+      Swal.fire({ icon: 'warning', title: 'Select a seat', text: 'Please select at least one seat.' });
+      return;
+    }
+
+    const active = getActiveShow();
+    if (!active || !active.showId) {
+      Swal.fire({ icon: 'warning', title: 'Pick a show', text: 'Please choose a valid show time.' });
+      return;
+    }
+
+    const params = new URLSearchParams();
+    params.set('movie_id', '{{ movie.id }}');
+    params.set('show_id', active.showId);
+    params.set('seats', seats.join(','));
+    if (active.showText) params.set('time', active.showText);
+
+    window.location.href = "{% url 'checkout' %}?" + params.toString();
+  });
+
+  // Activate clicked slot
+  if (timingsList) {
+    timingsList.addEventListener('click', function (ev) {
+      const slot = ev.target.closest('.time-slot');
+      if (!slot || slot.classList.contains('no-shows')) return;
+      const prev = timingsList.querySelector('.time-slot.active');
+      if (prev) prev.classList.remove('active');
+      slot.classList.add('active');
+
+      // enable checkout when a real slot selected
+      checkoutLink.classList.remove('disabled');
+      checkoutLink.removeAttribute('aria-disabled');
+
+      // fetch and mark booked seats for this show
+      const sid = slot.getAttribute('data-show-id');
+      if (sid) {
+        fetch(`/api/show/${sid}/booked_seats/`).then(r => {
+          if (!r.ok) return;
+          return r.json();
+        }).then(data => {
+          if (data && Array.isArray(data.booked)) {
+            if (window.markBookedSeats) window.markBookedSeats(data.booked);
+          }
+        }).catch(err => console.error('fetch booked seats error', err));
+      }
+    });
+  }
+});
+</script>
+
+<script>
+(function(){
+  // initial_booked_seats provided by server as a JSON array
+  const booked = {{ initial_booked_seats|default:"[]"|safe }};
+
+  // make markBookedSeats available globally so other code can call it
+  function markBookedSeats(list){
+    const setB = new Set(list || []);
+    // target the seat elements created by seats.js which use data-seat-id
+    document.querySelectorAll('[data-seat-id]').forEach(el=>{
+      const id = el.getAttribute('data-seat-id');
+      if (!id) return;
+      if (setB.has(id)){
+        el.classList.add('seat-booked');
+        el.classList.add('occupied');
+        el.setAttribute('aria-disabled','true');
+        el.setAttribute('data-available','false');
+        el.style.opacity = '0.35';
+        el.style.pointerEvents = 'none';
+        // also disable the element if it's a button
+        try { el.disabled = true; } catch(e) {}
+      } else {
+        el.classList.remove('seat-booked');
+        el.classList.remove('occupied');
+        el.removeAttribute('aria-disabled');
+        el.setAttribute('data-available','true');
+        el.style.opacity = '';
+        el.style.pointerEvents = '';
+        try { el.disabled = false; } catch(e) {}
+      }
+    });
+  }
+
+  // expose for external callers (AJAX handlers, conflict handler)
+  window.markBookedSeats = markBookedSeats;
+
+  // on page load try to mark initial seats (seats.js runs before this script since it's included earlier)
+  document.addEventListener('DOMContentLoaded', function(){
+    try {
+      // if server provided initial_booked_seats render them
+      if (Array.isArray(booked) && booked.length > 0) {
+        markBookedSeats(booked);
+      } else {
+        // else try to fetch booked seats for the active show (if any)
+        const active = document.querySelector('#timings-list .time-slot.active[data-show-id]');
+        if (active) {
+          const sid = active.getAttribute('data-show-id');
+          if (sid) {
+            fetch(`/api/show/${sid}/booked_seats/`).then(r => {
+              if (!r.ok) return;
+              return r.json();
+            }).then(data => {
+              if (data && Array.isArray(data.booked)) markBookedSeats(data.booked);
+            }).catch(err => {
+              console.warn('Could not fetch booked seats for active show:', err);
+            });
+          }
+        }
+      }
+    } catch (e) {
+      console.error('markBookedSeats error', e);
+    }
+  });
+
+  // helper to fetch for show elsewhere in the script
+  window.fetchBookedForShow = async function(showId){
+    if (!showId) return markBookedSeats([]);
+    try {
+      const res = await fetch(`/api/show/${showId}/booked_seats/`);
+      if (!res.ok) return;
+      const data = await res.json();
+      markBookedSeats(data.booked || []);
+    } catch(e){
+      console.error(e);
+    }
+  };
+})();
+</script>
+
+{% endblock %}

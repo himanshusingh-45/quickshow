@@ -1,0 +1,290 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ movie.title }} - TicketAdda{% endblock %}
+
+
+{% block content %}
+<style>
+    /* --- BUTTON ROW --- */
+.detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 22px;
+  flex-wrap: nowrap;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 26px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 14px;
+  cursor: pointer;
+  border: none;
+  transition: 0.25s ease;
+  box-shadow: 0 8px 22px rgba(0,0,0,0.28);
+}
+
+/* ICON INSIDE BUTTON */
+.action-btn i {
+  font-size: 16px;
+}
+
+/* --- WATCH TRAILER BUTTON (Dark modern) --- */
+.trailer-btn {
+  background: rgba(255,255,255,0.10);
+  color: #ffffff;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
+.trailer-btn:hover {
+  background: rgba(255,255,255,0.18);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.38);
+}
+
+.buy-btn {
+  background-color: var(--primary-color);
+  color: #ffffff;
+  padding: 12px 30px;
+  border-radius: 14px;
+}
+
+.buy-btn:hover {
+  background: #cb1515ff;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(173, 14, 14, 0.45);
+}
+
+/* --- HEART BUTTON (circle modern) --- */
+.wishlist-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.10);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255,255,255,0.12);
+  padding: 0;
+  transition: 0.25s ease;
+  box-shadow: 0 8px 22px rgba(0,0,0,0.3);
+}
+
+.wishlist-btn i {
+  font-size: 18px;
+}
+
+.wishlist-btn:hover {
+  background: rgba(255,255,255,0.20);
+  transform: translateY(-2px);
+}
+
+/* active heart */
+.wishlist-btn.active {
+  background: #9f0b0bff;
+  border-color: #ff3e68;
+  color: #fff;
+}
+
+/* --- RESPONSIVE (Small Screens) --- */
+@media (max-width: 720px) {
+  .detail-actions {
+    gap: 14px;
+  }
+
+  .action-btn {
+    font-size: 14px;
+    padding: 10px 22px;
+    border-radius: 12px;
+  }
+
+  .wishlist-btn {
+    width: 42px;
+    height: 42px;
+  }
+}
+
+@media (max-width: 450px) {
+  .detail-actions {
+    gap: 12px;
+  }
+
+  .action-btn {
+    font-size: 13px;
+    padding: 9px 18px;
+  }
+
+  .wishlist-btn {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+</style>
+<div class="movie-detail-container">
+    <div class="detail-grid">
+
+        <!-- Column 1: Movie Poster -->
+        <div class="detail-poster">
+            <img src="{% if movie.detail_poster_url %}{{ movie.detail_poster_url }}{% else %}{{ movie.poster_url }}{% endif %}" alt="Poster for {{ movie.title }}">
+        </div>
+
+        <!-- Column 2: Movie Information -->
+        <div class="detail-info">
+            <p class="language-tag">ENGLISH</p>
+            <h1>{{ movie.title }}</h1>
+            
+            <div class="detail-rating">
+                <i class="fas fa-star"></i>
+                <span>{{ movie.rating }} User Rating</span>
+            </div>
+            
+            <p class="synopsis">{{ movie.synopsis }}</p>
+            
+            <p class="detail-meta">
+                <span>{{ movie.duration_formatted }}</span> &bull;
+                <span>{{ movie.genre }}</span> &bull;
+                <span>{{ movie.release_date.year }}</span>
+            </p>
+            
+            <div class="detail-actions">
+                <button class="action-btn trailer-btn" id="watch-trailer-btn">
+                    <i class="fas fa-play"></i> Watch Trailer
+                </button>
+                <!-- This button now triggers the date picker -->
+                <button class="action-btn buy-btn" id="show-date-picker-btn">Buy Tickets</button>
+                <button class="action-btn wishlist-btn" id="wishlist-btn">
+                    <i class="far fa-heart"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- === NEW: Date Booking Section (Hidden by default) === -->
+<section class="date-booking-section" id="date-booking-section" style="display: none;">
+    <div class="date-booking-container">
+        <div class="date-carousel-wrapper">
+            <button class="scroll-arrow" id="scroll-left">&lt;</button>
+            <div class="date-list-container">
+                <div class="date-list" id="date-list">
+                    <!-- Dates will be dynamically inserted here by JavaScript -->
+                </div>
+            </div>
+            <button class="scroll-arrow" id="scroll-right">&gt;</button>
+        </div>
+        <a href="{% url 'seat_selection' movie.id %}" class="book-now-btn">Book Now</a>
+    </div>
+</section>
+
+
+<!-- Trailer Modal (Hidden by default) -->
+<div id="trailer-modal" class="modal-overlay">
+    <div class="modal-content">
+        <span class="close-modal-btn" id="close-modal-btn">&times;</span>
+        <div class="video-responsive-wrapper">
+            <iframe id="trailer-iframe" src="" title="Movie Trailer" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // --- Trailer Modal & Wishlist Logic ---
+        const modal = document.getElementById('trailer-modal');
+        const openBtn = document.getElementById('watch-trailer-btn');
+        const closeBtn = document.getElementById('close-modal-btn');
+        const trailerIframe = document.getElementById('trailer-iframe');
+        const videoId = "{{ movie.trailer_video_id }}";
+        const videoSrc = `https://www.youtube.com/embed/${videoId}?autoplay=1&modestbranding=1&showinfo=0`;
+        const wishlistBtn = document.getElementById('wishlist-btn');
+
+        if (modal && openBtn) {
+            openBtn.addEventListener('click', () => {
+                trailerIframe.src = videoSrc;
+                modal.style.display = 'flex';
+            });
+            const closeModal = () => {
+                modal.style.display = 'none';
+                trailerIframe.src = '';
+            };
+            closeBtn.addEventListener('click', closeModal);
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) closeModal();
+            });
+        }
+        if(wishlistBtn) {
+            wishlistBtn.addEventListener('click', function() {
+                this.classList.toggle('active');
+                const icon = this.querySelector('i');
+                icon.classList.toggle('far');
+                icon.classList.toggle('fas');
+            });
+        }
+
+        // --- NEW: Date Booking Logic ---
+        const showDatePickerBtn = document.getElementById('show-date-picker-btn');
+        const dateBookingSection = document.getElementById('date-booking-section');
+        const dateList = document.getElementById('date-list');
+        const scrollLeftBtn = document.getElementById('scroll-left');
+        const scrollRightBtn = document.getElementById('scroll-right');
+
+        if (showDatePickerBtn && dateBookingSection && dateList) {
+            // 1. Generate the next 7 days
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            
+            for (let i = 0; i < 7; i++) {
+                const date = new Date();
+                date.setDate(date.getDate() + i);
+                
+                const dayNum = date.getDate();
+                const monthName = months[date.getMonth()];
+
+                const dateItem = document.createElement('div');
+                dateItem.classList.add('date-item');
+                if (i === 0) {
+                    dateItem.classList.add('active');
+                }
+                dateItem.innerHTML = `<div class="day-num">${dayNum}</div><div class="month-name">${monthName}</div>`;
+                dateList.appendChild(dateItem);
+            }
+
+            // 2. Show the date picker when "Buy Tickets" is clicked
+            showDatePickerBtn.addEventListener('click', () => {
+                dateBookingSection.style.display = 'block';
+                dateBookingSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
+            
+            // 3. Handle clicking on a date
+            dateList.addEventListener('click', (e) => {
+                const clickedItem = e.target.closest('.date-item');
+                if (!clickedItem) return;
+
+                const currentActive = dateList.querySelector('.active');
+                if (currentActive) {
+                    currentActive.classList.remove('active');
+                }
+                clickedItem.classList.add('active');
+            });
+            
+            // 4. Handle carousel scrolling
+            scrollLeftBtn.addEventListener('click', () => {
+                dateList.parentElement.scrollBy({ left: -150, behavior: 'smooth' });
+            });
+            scrollRightBtn.addEventListener('click', () => {
+                dateList.parentElement.scrollBy({ left: 150, behavior: 'smooth' });
+            });
+        }
+    });
+</script>
+{% endblock %}
+

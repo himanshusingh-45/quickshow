@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="{% static 'images/favicon.svg' %}" />
+
+    <title>
+      {% block title %}
+        TicketAdda
+      {% endblock %}
+    </title>
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  </head>
+  <body>
+    <!-- === Navbar === -->
+    <header class="navbar-container" id="navbar-container">
+      <nav class="navbar">
+        <a href="{% url 'home' %}" class="navbar-brand">TicketAdda</a>
+
+        <!-- Desktop Navigation -->
+        <div class="nav-links-desktop">
+          <a href="{% url 'home' %}" class="nav-item">Home</a>
+          <a href="{% url 'movies' %}" class="nav-item">Movies</a>
+          <a href="{% url 'theaters' %}" class="nav-item">Theaters</a>
+
+          {% if user.is_authenticated %}
+            <a href="{% url 'admin_dashboard' %}" class="nav-item">Dashboard</a>
+          {% else %}
+            <a href="#" class="nav-item">Releases</a>
+          {% endif %}
+
+          {% comment %} <a href="#" class="nav-item">Releases</a> {% endcomment %}
+        </div>
+
+        <!-- User Actions & Mobile Toggle -->
+        <div class="nav-actions">
+          <button class="search-btn"><i class="fas fa-search"></i></button>
+
+          <div class="desktop-auth-buttons">
+            {% if user.is_authenticated %}
+              
+              <a href="{% url 'profile' %}" id="navbar-profile-link-desktop"><img src="{{ user.profile.profile_pic.url }}" alt="Profile" class="nav-profile-pic" /></a>
+            {% else %}
+              <!-- Show login button if not logged in -->
+              <a href="{% url 'login_register' %}" class="login-btn">Login</a>
+            {% endif %}
+          </div>
+
+          {% if user.is_authenticated %}
+            <a href="{% url 'profile' %}" class="nav-profile-pic-mobile" id="navbar-profile-link"><img src="{{ user.profile.profile_pic.url }}" alt="Profile" /></a>
+          {% endif %}
+
+          <!-- Hamburger Icon for Mobile -->
+          <button class="mobile-menu-icon" id="mobile-menu-icon"><i class="fas fa-bars"></i></button>
+        </div>
+      </nav>
+    </header>
+
+    <!-- Mobile Navigation Menu (Hidden by default) -->
+    <div class="mobile-nav-menu" id="mobile-nav-menu">
+      <button class="close-menu-btn" id="close-menu-btn"><i class="fas fa-times"></i></button>
+      <a href="{% url 'home' %}" class="nav-item">Home</a>
+      <a href="{% url 'movies' %}" class="nav-item">Movies</a>
+      <a href="{% url 'theaters' %}" class="nav-item">Theaters</a>
+
+      {% if user.is_authenticated %}
+        <a href="{% url 'dashboard' %}" class="nav-item">Dashboard</a>
+      {% else %}
+        <a href="#" class="nav-item">Releases</a>
+      {% endif %}
+
+      {% comment %} <a href="#" class="nav-item">Releases</a> {% endcomment %}
+
+      <div class="mobile-auth-buttons">
+        {% if user.is_authenticated %}
+          <a href="{% url 'profile' %}" class="profile-btn">Profile</a>
+          <a href="{% url 'logout' %}" class="logout-btn">Logout</a>
+        {% else %}
+          <a href="{% url 'login_register' %}" class="login-btn">Login</a>
+        {% endif %}
+      </div>
+    </div>
+   
+    <!-- Hidden Search Bar -->
+<div id="qs-search-bar" style="
+    display:none;
+    position:fixed;
+    top:72px;
+    left:50%;
+    transform:translateX(-50%);
+    width:92%;
+    max-width:560px;
+    background:#0f0f0f;
+    padding:8px;
+    border-radius:10px;
+    box-shadow:0 18px 40px rgba(0,0,0,.6);
+    z-index:99999;
+    align-items:center;
+">
+  <input id="qs-search-input"
+         type="text"
+         placeholder="Search movies..."
+         style="width:100%; padding:10px 12px;
+         border:none; border-radius:8px;
+         background:#111; color:#fff;
+         font-size:15px; outline:none;" />
+</div>
+
+    <!-- === Main Content Block === -->
+    <main>
+      {% block content %}
+
+      {% endblock %}
+    </main>
+
+    <!-- === Footer === -->
+    <footer class="footer-container">
+      <div class="footer-content">
+        <div class="footer-brand">
+          <span class="quickshow-logo">TicketAdda</span>
+          <p>The best place to book your movie tickets. Fast, easy, and reliable. Enjoy the show!</p>
+          <div class="app-links">
+            <a href="#"><img src="{% static 'images/googlePlay-DT9q0T4u.svg' %}" alt="Google Play" /></a>
+            <a href="#"><img src="{% static 'images/appStore.svg' %}" alt="App Store" /></a>
+          </div>
+        </div>
+        <div class="footer-section">
+          <h4>Company</h4>
+          <ul>
+            <li>
+              <a href="{% url 'home' %}">Home</a>
+            </li>
+            <li>
+              <a href="#">About us</a>
+            </li>
+            <li>
+              <a href="#">Contact us</a>
+            </li>
+            <li>
+              <a href="#">Privacy policy</a>
+            </li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h4>Get in touch</h4>
+          <p>+91 8418048084</p>
+          <p>contact@ticketAdda.com</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>Copyright 2025 &copy; TicketAdda. All Rights Reserved.</p>
+      </div>
+    </footer>
+
+    {% block extra_js %}
+      <!-- Main JS for Navbar Scroll and Mobile Toggle -->
+      <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          const mobileMenuIcon = document.getElementById('mobile-menu-icon')
+          const mobileNavMenu = document.getElementById('mobile-nav-menu')
+          const closeMenuBtn = document.getElementById('close-menu-btn')
+          const navbarContainer = document.getElementById('navbar-container')
+        
+          // 1. Logic to toggle the mobile menu
+          if (mobileMenuIcon && mobileNavMenu) {
+            mobileMenuIcon.addEventListener('click', function () {
+              mobileNavMenu.classList.add('active')
+            })
+          }
+          if (closeMenuBtn && mobileNavMenu) {
+            closeMenuBtn.addEventListener('click', function () {
+              mobileNavMenu.classList.remove('active')
+            })
+          }
+        
+          // 2. Logic for navbar scroll effect
+          window.addEventListener('scroll', function () {
+            if (window.scrollY > 50) {
+              if (navbarContainer) navbarContainer.classList.add('navbar-scrolled')
+            } else {
+              if (navbarContainer) navbarContainer.classList.remove('navbar-scrolled')
+            }
+          })
+        })
+        
+        document.addEventListener('DOMContentLoaded', function () {
+          // This will work for both desktop and mobile profile pic links
+          var profilePicLinks = [document.getElementById('navbar-profile-link'), document.getElementById('navbar-profile-link-desktop')].filter(Boolean) // removes nulls
+        
+          profilePicLinks.forEach(function (link) {
+            if (link) {
+              link.addEventListener('click', function (e) {
+                var currentUrl = window.location.pathname
+                // Replace '/profile/' with your site's actual profile page URL pattern
+                if (currentUrl === '{% url "profile" %}') {
+                  // If already on profile page, redirect to home
+                  e.preventDefault()
+                  window.location.href = '{% url "home" %}'
+                }
+                // Else: Let normal navigation happen (to profile page)
+              })
+            }
+          })
+        })
+
+        document.addEventListener('DOMContentLoaded', function(){
+
+    const searchBtn = document.querySelector('.search-btn');
+    const searchBar = document.getElementById('qs-search-bar');
+    const searchInput = document.getElementById('qs-search-input');
+    const searchClose = document.getElementById('qs-search-close');
+
+    if (searchBtn && searchBar) {
+
+        // Open Search Bar
+        searchBtn.addEventListener('click', () => {
+            searchBar.style.display = "flex";
+            searchInput.focus();
+        });
+
+        // Close Search Bar
+        searchClose.addEventListener('click', () => {
+            searchBar.style.display = "none";
+            searchInput.value = "";
+        });
+
+        // When user presses Enter → redirect to search page
+        searchInput.addEventListener('keydown', function(e){
+            if (e.key === "Enter") {
+                e.preventDefault();
+
+                const q = searchInput.value.trim();
+                if (!q) return;
+
+                // redirect to /movies/?search=query
+                window.location.href = `/movies/?search=${encodeURIComponent(q)}`;
+            }
+        });
+
+    }
+});
+document.addEventListener("DOMContentLoaded", function () {
+    const searchBtn = document.querySelector(".search-btn");
+    const searchBar = document.getElementById("qs-search-bar");
+    const searchInput = document.getElementById("qs-search-input");
+
+    if (!searchBtn || !searchBar || !searchInput) return;
+
+    // Open search bar
+    searchBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        searchBar.style.display = "flex";
+        searchInput.focus();
+    });
+
+    // Close when clicking outside
+    document.addEventListener("click", function (e) {
+        if (!searchBar.contains(e.target) && !searchBtn.contains(e.target)) {
+            searchBar.style.display = "none";
+            searchInput.value = "";
+        }
+    });
+
+    // Search on Enter
+    searchInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            const q = searchInput.value.trim();
+            if (q.length === 0) return;
+            window.location.href = `/movies/?search=${encodeURIComponent(q)}`;
+        }
+    });
+});
+
+
+      </script>
+    {% endblock %}
+
+<div id="qs-chat-widget" style="position:fixed; right:20px; bottom:20px; z-index:9999; font-family:inherit;">
+  <div id="qs-chat-button" title="Open Chat"
+     style="width:70px;height:70px;border-radius:50%;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+    <img src="{% static 'images/chatbots.jpeg' %}"
+         alt="Chatbot"
+         style="width:60px;height:60px;object-fit:cover;border-radius:50%;box-shadow:0 6px 18px rgba(0,0,0,.3);">
+</div>
+
+
+  <div id="qs-chat-panel" style="display:none; width:360px; max-width:calc(100vw - 40px); height:480px; background:#0f0f0f; color:#fff; border-radius:12px; box-shadow:0 12px 40px rgba(0,0,0,.5); overflow:hidden; margin-top:10px;">
+    <div style="padding:12px 14px; background:#111; display:flex; align-items:center; gap:8px;">
+      <strong style="font-size:15px;">TicketAdda Assistant</strong>
+      <div style="margin-left:auto; opacity:.7; font-size:13px;">Live</div>
+    </div>
+
+    <div id="qs-chat-log" style="padding:12px; height:360px; overflow:auto; font-size:14px; background:linear-gradient(#0f0f0f, #0b0b0b);">
+      <!-- messages appear here -->
+      <div style="color:#999; font-size:13px; margin-top:10px;">Ask me anything — showtimes, booking help, or site help.</div>
+    </div>
+
+    <div style="padding:10px; background:#0b0b0b; display:flex; gap:8px; border-top:1px solid rgba(255,255,255,.03);">
+      <input id="qs-chat-input" placeholder="Type a question..." style="flex:1;padding:10px;border-radius:8px;border:none;background:#121212;color:#fff;font-size:14px" />
+      <button id="qs-chat-send" style="background:#e50914;border:none;color:#fff;padding:10px 12px;border-radius:8px;cursor:pointer;">Send</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.startsWith(name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  const chatButton = document.getElementById('qs-chat-button');
+  const chatPanel = document.getElementById('qs-chat-panel');
+  const chatLog = document.getElementById('qs-chat-log');
+  const chatInput = document.getElementById('qs-chat-input');
+  const chatSend = document.getElementById('qs-chat-send');
+
+  if (!chatButton || !chatPanel || !chatLog || !chatInput || !chatSend) return;
+
+  let sending = false;
+  chatButton.addEventListener('click', () => {
+    chatPanel.style.display = chatPanel.style.display === 'none' ? 'block' : 'none';
+    if (chatPanel.style.display === 'block') chatInput.focus();
+  });
+
+  function appendMessage(role, text) {
+    const wrap = document.createElement('div');
+    wrap.style.marginBottom = '10px';
+    if (role === 'user') {
+      wrap.innerHTML = `<div style="text-align:right"><div style="display:inline-block;background:#1b1b1b;padding:8px 12px;border-radius:10px;color:#fff;max-width:85%">${escapeHtml(text)}</div></div>`;
+    } else {
+      wrap.innerHTML = `<div style="text-align:left"><div style="display:inline-block;background:#111;padding:8px 12px;border-radius:10px;color:#fff;max-width:85%">${escapeHtml(text)}</div></div>`;
+    }
+    chatLog.appendChild(wrap);
+    chatLog.scrollTop = chatLog.scrollHeight;
+    return wrap;
+  }
+
+  function escapeHtml(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  async function sendMessage(msg) {
+    if (sending) return;
+    sending = true;
+    chatSend.disabled = true;
+    chatInput.disabled = true;
+
+    appendMessage('user', msg);
+    const placeholder = appendMessage('assistant', '…');
+
+    try {
+      const res = await fetch("{% url 'api_chat' %}", {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ message: msg })
+      });
+
+      // remove placeholder
+      if (placeholder && placeholder.parentNode) placeholder.parentNode.removeChild(placeholder);
+
+      if (!res.ok) {
+        const txt = await res.text();
+        appendMessage('assistant', 'Error: ' + (txt || res.status));
+      } else {
+        const payload = await res.json();
+        if (payload.error) appendMessage('assistant', 'Error: ' + payload.error);
+        else appendMessage('assistant', payload.reply || 'No response');
+      }
+    } catch (err) {
+      if (placeholder && placeholder.parentNode) placeholder.parentNode.removeChild(placeholder);
+      appendMessage('assistant', 'Network error: ' + (err.message || err));
+    } finally {
+      sending = false;
+      chatSend.disabled = false;
+      chatInput.disabled = false;
+      chatInput.focus();
+    }
+  }
+
+  chatSend.addEventListener('click', () => {
+    const msg = chatInput.value.trim();
+    if (!msg) return;
+    chatInput.value = '';
+    sendMessage(msg);
+  });
+
+  chatInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      chatSend.click();
+    }
+  });
+
+})();
+</script>
+
+  </body>
+</html>

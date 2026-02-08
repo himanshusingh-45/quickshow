@@ -1,0 +1,223 @@
+/* WRAPPER */
+.qs-ticket-wrapper {
+  max-width: 900px;
+  margin: 30px auto;
+  padding: 16px;
+}
+
+/* MAIN TICKET CARD */
+.qs-ticket-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+  border: 1px solid #eaeaea;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  font-family: "Inter", Arial, sans-serif;
+  color: #000;
+}
+
+/* HEADER */
+.qs-ticket-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.qs-ticket-logo {
+  height: 85px;
+  object-fit: contain;
+  border: none !important;
+  background: none !important;
+}
+
+.qs-ticket-meta {
+  text-align: right;
+  color: #444;
+  font-size: 0.92rem;
+}
+.qs-ticket-meta strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 1rem;
+}
+
+/* BODY */
+.qs-ticket-body {
+  display: flex;
+  gap: 22px;
+  align-items: flex-start;
+}
+
+/* POSTER */
+.qs-ticket-poster {
+  width: 190px;
+  height: 130px;
+  object-fit: cover;
+  border-radius: 12px;
+  background: #f5f5f5;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+
+/* DETAILS */
+.qs-ticket-details {
+  flex: 1;
+}
+
+.qs-ticket-title {
+  margin: 0 0 10px 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.qs-ticket-details p {
+  margin: 6px 0;
+  font-size: 1rem;
+  color: #333;
+}
+
+/* PRICE */
+.qs-ticket-price {
+  text-align: right;
+}
+
+.qs-price-box {
+  background: #f6f6f6;
+  padding: 12px 20px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-size: 1.35rem;
+  font-weight: 800;
+  width: fit-content;
+  margin-left: auto;
+}
+
+/* FOOTER */
+.qs-ticket-footer {
+  padding-top: 18px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.qs-ticket-footer small {
+  color: #666;
+}
+
+/* BUTTONS */
+.qs-ticket-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.qs-btn {
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: 1px solid #000;
+  background: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.qs-btn:hover {
+  background: #e80a0a;
+  color: #fff;
+}
+
+.qs-btn.primary {
+  background: #ae0404;
+  color: #fff;
+  border: 1px solid #000;
+}
+
+
+@media (max-width: 1024px) and (min-width: 721px) {
+
+  .qs-ticket-body {
+    flex-direction: row !important;
+    text-align: left !important;
+    gap: 22px !important;
+    align-items: flex-start !important;
+  }
+
+  .qs-ticket-poster {
+    width: 180px !important;
+    height: 120px !important;
+    object-fit: cover !important;
+  }
+
+  .qs-ticket-price {
+    text-align: right !important;
+  }
+
+  .qs-ticket-footer {
+    flex-direction: row !important;
+  }
+
+  .qs-ticket-actions {
+    flex-direction: row !important;
+    width: auto !important;
+  }
+
+  .qs-btn {
+    width: auto !important;
+  }
+}
+
+/* SMALL DEVICES (PHONES) */
+@media (max-width: 720px) {
+
+  .qs-ticket-body {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    gap: 16px !important;
+  }
+
+  .qs-ticket-poster {
+    width: 200px !important;
+    height: auto !important;
+    max-height: 160px !important;
+    object-fit: contain !important;
+  }
+
+  .qs-ticket-title {
+    font-size: 1.4rem !important;
+  }
+
+  .qs-ticket-price {
+    text-align: center !important;
+    width: 100% !important;
+  }
+
+  .qs-price-box {
+    margin: 10px auto !important;
+  }
+
+  .qs-ticket-footer {
+    flex-direction: column !important;
+    gap: 14px !important;
+    text-align: center !important;
+  }
+
+  /* BUTTON SECTION — FIXED */
+  .qs-ticket-actions {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 10px !important;
+    width: 100%;
+  }
+
+  .qs-btn,
+  .qs-btn.primary {
+    width: max-content !important;     /* ← NOT full width */
+    padding: 12px 28px !important;     /* ← More premium look */
+    font-size: 1rem !important;
+    border-radius: 10px !important;
+    align-self: center !important;     /* ← Center-align button */
+  }
+}

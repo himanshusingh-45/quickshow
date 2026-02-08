@@ -1,0 +1,377 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Bookings{% endblock %}
+
+{% block content %}
+<style>
+.page-wrapper {
+  min-height: 100vh;
+  background: #141414 !important;
+  color: #fff;
+}
+
+.admin-dashboard-container {
+  display: flex;
+  background-color: transparent;
+  color: #fff;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+.admin-sidebar {
+    width: 250px;
+    background-color: #101010;
+    padding: 20px 0;
+    flex-shrink: 0;
+    border-right: 1px solid #222;
+    min-height: 100vh;
+    transition: width 0.3s ease;
+}
+
+.admin-sidebar-header {
+    padding: 0 25px 20px 25px;
+    border-bottom: 1px solid #222;
+}
+
+.admin-sidebar-logo {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #e50914;
+    text-decoration: none;
+}
+
+.admin-profile {
+    display: flex;
+    align-items: center;
+    padding-left: 35px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #222;
+}
+
+.admin-profile-pic {
+    font-size: 2.5rem;
+    margin-right: 15px;
+    color: #aaa;
+}
+
+.admin-username {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #eee;
+}
+
+/* Sidebar Navigation */
+.admin-nav {
+    padding-top: 10px;
+}
+
+.admin-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.admin-nav-item {
+    display: flex;
+    align-items: center;
+    padding: 15px 25px;
+    text-decoration: none;
+    color: #aaa;
+    font-size: 1rem;
+    transition: all 0.2s ease-in-out;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.admin-nav-item i {
+    margin-right: 15px;
+    font-size: 1.1rem;
+    width: 20px;
+    text-align: center;
+    transition: margin 0.3s ease;
+}
+
+.admin-nav-item:hover {
+    color: #fff;
+    background-color: #222;
+}
+
+.admin-nav li.active .admin-nav-item {
+    background-color: #e50914;
+    color: #fff;
+    font-weight: 500;
+    border-right: 3px solid #fff;
+}
+
+/* Main Content Area */
+.admin-main-content {
+    flex-grow: 1;
+    padding: 30px 40px;
+    overflow-y: auto;
+}
+
+.admin-page-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #fff;
+    margin-top: 0;
+    margin-bottom: 25px;
+    padding-bottom: 10px;
+    border-bottom: 3px solid #e50914;
+    display: inline-block;
+}
+
+/* Section Title */
+.admin-main-content .section-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #fff;
+    margin-top: 15px;
+    margin-bottom: 20px;
+}
+
+/* Horizontal Movie List */
+.admin-main-content .horizontal-movie-list {
+    display: flex;
+    overflow-x: auto;
+    gap: 20px;
+    padding-bottom: 25px;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Custom Scrollbar */
+.horizontal-movie-list::-webkit-scrollbar {
+    height: 6px;
+}
+.horizontal-movie-list::-webkit-scrollbar-thumb {
+    background-color: #e50914;
+    border-radius: 10px;
+}
+.horizontal-movie-list::-webkit-scrollbar-track {
+    background: #222;
+}
+
+/* Main content (bookings) - placed to the right of sidebar */
+.main-content {
+  flex-grow: 1;
+  padding: 28px 40px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* Bookings list */
+.bookings-wrapper { max-width: 1000px; margin: 0 auto; }
+.bookings-title { font-size: 1.5rem; font-weight:700; color:#fff; margin-bottom:12px; }
+.booking-card {
+  background:#0f0f0f;
+  padding:16px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,0.04);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.booking-left { max-width:70%; }
+.booking-title { font-weight:700; color:#fff; margin-bottom:6px; }
+.booking-meta { color:#cfcfcf; font-size:0.95rem; margin-bottom:6px; }
+.booking-right { text-align:right; min-width:140px; }
+
+.btn-ticket {
+  margin-top:8px;
+  color:#e50914;
+  text-decoration:none;
+  display:inline-block;
+  font-weight:700;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .admin-sidebar { width: 80px; padding: 14px 0; }
+  .admin-profile { display:none; }
+  .admin-nav-item .nav-text { display:none; }
+  .admin-nav-item { justify-content:center; padding:18px 0; }
+  .admin-nav-item i { margin-right:0; font-size:1.2rem; width:100%; text-align:center; }
+  .main-content { padding: 20px; }
+}
+@media (max-width: 720px) {
+  .booking-card { flex-direction:column; align-items:flex-start; gap:10px; }
+  .booking-right { text-align:left; width:100%; }
+}
+
+/* MOBILE RESPONSIVE SIDEBAR (same as Add Shows) */
+@media (max-width: 768px) {
+    .admin-sidebar {
+        width: 80px !important;
+        padding: 20px 0 !important;
+    }
+
+    .admin-profile {
+        display: none !important;
+    }
+
+    .admin-nav-item .nav-text {
+        display: none !important;
+    }
+
+    .admin-nav-item {
+        justify-content: center !important;
+        padding: 20px 0 !important;
+    }
+
+    .admin-nav-item i {
+        margin-right: 0 !important;
+        font-size: 1.5rem !important;
+    }
+
+    .admin-nav li.active .admin-nav-item {
+        border-right: none !important;
+        background-color: #e50914 !important;
+    }
+
+    .main-content {
+        padding: 20px !important;
+    }
+}
+
+</style>
+
+<div class="page-wrapper">
+  {% if request.user.is_staff %}
+    <div class="admin-dashboard-container">
+      <aside class="admin-sidebar">
+        <div class="admin-profile">
+            <div class="admin-profile-pic">
+                <i class="fas fa-user-circle"></i>
+            </div>
+            <span class="admin-username">{{ request.user.username }}</span>
+        </div>
+        
+        <nav class="admin-nav">
+            <ul>
+                <li>
+                    <a href="{% url 'admin_dashboard' %}" class="admin-nav-item">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <!-- *** HTML FIX *** Added <span> tag -->
+                        <span class="nav-text">Dashboard</span>
+                    </a>
+                </li>
+                <li class="">
+                    <a href="{% url 'add_shows' %}" class="admin-nav-item">
+                        <i class="fas fa-plus-circle"></i>
+                        <!-- *** HTML FIX *** Added <span> tag -->
+                        <span class="nav-text">Add Shows</span>
+                    </a>
+                </li>
+                <li>
+                   
+                      <a href="{% url 'list_shows' %}" class="admin-nav-item">
+                        <i class="fas fa-film"></i>
+                        <span class="nav-text">List Shows</span>
+                    </a>
+                </li>
+                <li class="{% if request.resolver_match.url_name == 'my_bookings' %}active{% endif %}">
+            <a href="{% url 'my_bookings' %}" class="admin-nav-item">
+                <i class="fas fa-receipt"></i>
+                <span class="nav-text">List Bookings</span>
+            </a>
+        </li>
+            </ul>
+        </nav>
+    </aside>
+
+      <!-- Right: Bookings list -->
+      <main class="main-content" role="main">
+<h1 class="admin-page-title">My Bookings</h1>
+
+        <div class="bookings-wrapper">
+          {% if bookings %}
+            <div style="display:grid;gap:12px;">
+              {% for b in bookings %}
+                <div class="booking-card">
+                  <div class="booking-left">
+                    <div class="booking-title">
+                      {% if b.movie %}{{ b.movie.title }}{% else %}Movie{% endif %}
+                    </div>
+                    <div class="booking-meta">
+                      {% if b.show %}
+                        Show: {{ b.show.show_date }} • {{ b.show.show_time|time:"g:i A" }}
+                      {% else %}
+                        Show: N/A
+                      {% endif %}
+                    </div>
+                    <div class="booking-meta">Seats: {{ b.seats }}</div>
+                    <div class="booking-meta">Booked: {{ b.booking_time }}</div>
+                  </div>
+
+                  <div class="booking-right">
+                    <div style="font-weight:800;color:#fff">
+                      {% if b.total_price and b.total_price > 0 %}
+                        ${{ b.total_price|floatformat:2 }}
+                      {% elif b.show and b.show.price and b.show.price > 0 %}
+                        ${{ b.show.price|floatformat:2 }}
+                      {% elif b.movie and b.movie.price and b.movie.price > 0 %}
+                        ${{ b.movie.price|floatformat:2 }}
+                      {% else %}
+                        $50.00
+                      {% endif %}
+                    </div>
+                    <a class="btn-ticket" href="{% url 'ticket' %}?ticket={{ b.ticket_number }}">View ticket</a>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p style="color:#bfb1b6;">No bookings yet.</p>
+          {% endif %}
+        </div>
+      </main>
+    </div>
+
+  {% else %}
+    <!-- Regular (non-admin) user view: centered bookings -->
+    <div style="max-width:1000px;margin:24px auto;padding:12px;">
+      <h2 style="margin:16px 0 12px 0;color:#fff;">My Bookings</h2>
+      {% if bookings %}
+        <div style="display:grid;gap:12px">
+          {% for b in bookings %}
+            <div class="booking-card">
+              <div class="booking-left">
+                <div class="booking-title">
+                  {% if b.movie %}{{ b.movie.title }}{% else %}Movie{% endif %}
+                </div>
+                <div class="booking-meta">
+                  {% if b.show %}
+                    Show: {{ b.show.show_date }} • {{ b.show.show_time|time:"g:i A" }}
+                  {% else %}
+                    Show: N/A
+                  {% endif %}
+                </div>
+                <div class="booking-meta">Seats: {{ b.seats }}</div>
+                <div class="booking-meta">Booked: {{ b.booking_time }}</div>
+              </div>
+
+              <div class="booking-right">
+                <div style="font-weight:800;color:#fff">
+                  {% if b.total_price and b.total_price > 0 %}
+                    ${{ b.total_price|floatformat:2 }}
+                  {% elif b.show and b.show.price and b.show.price > 0 %}
+                    ${{ b.show.price|floatformat:2 }}
+                  {% elif b.movie and b.movie.price and b.movie.price > 0 %}
+                    ${{ b.movie.price|floatformat:2 }}
+                  {% else %}
+                    $50.00
+                  {% endif %}
+                </div>
+                <a class="btn-ticket" href="{% url 'ticket' %}?ticket={{ b.ticket_number }}">View ticket</a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p style="color:#bfb1b6;">No bookings yet.</p>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

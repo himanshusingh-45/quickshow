@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+{% block title %}My Profile - TicketAdda{% endblock %}
+
+{% block content %}
+<!-- This uses the same blurred background as the login page -->
+<div class="auth-page-background"></div>
+
+<div class="profile-container">
+    <div class="profile-card">
+
+        <!-- Django Messages Display (e.g., "Profile Updated!") -->
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Current Profile Picture -->
+
+        <img src="{{ user.profile.profile_pic.url }}" alt="Profile Picture" class="profile-pic">
+        
+        <h2 class="profile-name">@{{ user.username }}</h2>
+        
+        <div class="profile-info">
+            <p>Here you can update your details and profile picture.</p>
+            
+            <!-- The form MUST have enctype="multipart/form-data" for file uploads -->
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <!-- Form for username and email (from u_form) -->
+                <fieldset class="input-group">
+                    <i class="fas fa-user"></i>
+                    {{ u_form.username }}
+                </fieldset>
+                {% comment %} <fieldset class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    {{ u_form.email }}
+                </fieldset> {% endcomment %}
+
+                <fieldset class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <!-- visible readonly input (no name, so it's not submitted) -->
+                    <input type="email" value="{{ user.email }}" readonly class="readonly-input" />
+                    <!-- hidden input with the actual name so form processing receives email -->
+                    <input type="hidden" name="email" value="{{ user.email }}">
+                </fieldset>
+
+                <fieldset class="input-group">
+                    <label for="id_profile_pic" class="profile-pic-label">
+                        Upload New Picture  
+                    </label>
+                    {{ p_form.profile_pic }}
+                </fieldset>
+                
+                <button type="submit" class="auth-btn">Update Profile</button>
+                
+                
+            </form>
+             <a href="{% url 'logout' %}" class="logout-btn" style="width: 50px; margin-top: 20px;">Logout</a>
+
+        </div>
+        
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+{% endblock %}
+

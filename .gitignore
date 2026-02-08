@@ -1,0 +1,41 @@
+# -----------------------------
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.log
+
+# Virtual Environment
+venv/
+env/
+.venv/
+ENV/
+env.bak/
+
+.env
+*.env
+.env.*
+
+
+db.sqlite3
+/media/
+staticfiles/
+media/
+static_root/
+# static/
+
+*/migrations/__pycache__/
+*/migrations/*.pyc
+
+.vscode/
+.idea/
+*.swp
+
+.DS_Store
+Thumbs.db
+
+
+node_modules/
+dist/

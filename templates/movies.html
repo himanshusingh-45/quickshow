@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Now Showing - TicketAdda{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="movie-grid-header">
+        <h1>All Movies</h1>
+    </div>
+
+    <div class="movie-grid">
+        {% for movie in all_movies %}
+        <div class="movie-card">
+            <div class="movie-poster">
+                <img src="{{ movie.poster_url }}" alt="{{ movie.title }}">
+            </div>
+            <div class="movie-info">
+                <h3>{{ movie.title }}</h3>
+                <p class="meta">{{ movie.release_date.year }} &bull; {{ movie.genre }} &bull; {{ movie.duration_formatted }}</p>
+                <div class="card-footer">
+                    {% comment %} <a href="#" class="buy-tickets-btn">Buy Tickets</a> {% endcomment %}
+ <a href="{% url 'movie_detail' movie.id %}" class="buy-tickets-btn">Buy Tickets</a>
+
+                    <div class="rating">
+                        <i class="fas fa-star"></i>
+                        <span>{{ movie.rating }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p style="text-align: center; color: #888; grid-column: 1 / -1;">No movies are currently showing. Please check back later.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+

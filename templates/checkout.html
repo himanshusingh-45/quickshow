@@ -1,0 +1,301 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Checkout - TicketAdda{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/seats.css' %}" />
+
+<style>
+/* Reset / base */
+* { box-sizing: border-box; }
+.checkout-wrapper {
+  max-width: 980px;      /* narrower so inputs don't grow too wide */
+  margin: 32px auto;
+  padding: 18px;
+  color: #fff;
+}
+
+/* Grid layout */
+.checkout-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.9fr;
+  gap: 26px;
+  align-items: start;
+}
+
+/* Card */
+.card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 22px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+}
+
+/* Titles */
+.card h2 { margin:0 0 14px 0; font-size:1.35rem; font-weight:700; }
+
+/* Form grid inside billing card */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 14px;
+  margin-top: 8px;
+}
+
+/* single-column rows that should span both columns (use .full) */
+.form-grid .full { grid-column: 1 / -1; }
+
+/* Labels & inputs */
+.field {
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+label {
+  font-size:0.9rem;
+  color:#dcdcdc;
+}
+.input-field, textarea {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 0.95rem;
+  width:100%;
+  max-width:100%;
+  transition: box-shadow .12s ease, border-color .12s ease;
+}
+.input-field:focus, textarea:focus {
+  outline: none;
+  border-color: rgba(229,9,20,0.95);
+  box-shadow: 0 6px 20px rgba(229,9,20,0.08);
+}
+
+/* summary box */
+.summary-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; color:#ddd; }
+.summary-row .label { color:#cfcfcf; }
+.total-box {
+  border-top:1px dashed rgba(255,255,255,0.08);
+  padding-top:12px;
+  margin-top:8px;
+  font-weight:800;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+/* Terms + button */
+.terms { margin-top:14px; display:flex; align-items:center; gap:10px; color:#ddd; font-size:0.95rem; }
+.checkout-btn {
+  margin-top:12px;
+  background:#e50914;
+  color:#fff;
+  width:100%;
+  padding:13px;
+  border-radius:10px;
+  border:none;
+  font-weight:700;
+  cursor:pointer;
+  font-size:1rem;
+}
+.checkout-btn:disabled {
+  background:#444;
+  cursor:not-allowed;
+  opacity:0.8;
+}
+
+/* small helper text */
+.helper { font-size:0.86rem; color:#bfbfbf; }
+
+/* responsive */
+@media (max-width: 880px) {
+  .checkout-grid { grid-template-columns: 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+  .card { padding:18px; }
+}
+
+/* ensure sweetalert text color is readable (if used) */
+.swal2-popup { font-family: inherit; }
+</style>
+
+<div class="checkout-wrapper">
+  <form id="checkout-form" method="POST" action="{% url 'checkout' %}">
+    {% csrf_token %}
+    <div class="checkout-grid">
+
+      <!-- BILLING CARD -->
+      <div class="card">
+        <h2>Billing Details</h2>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="full-name">Full name *</label>
+            <input id="full-name" class="input-field" type="text" required placeholder="John Doe">
+          </div>
+
+          <div class="field">
+            <label for="phone">Phone number *</label>
+            <input id="phone" class="input-field" type="tel" required placeholder="+91 9XXXXXXXXX">
+          </div>
+
+          <div class="field full">
+            <label for="email">Email address *</label>
+            <input id="email" class="input-field" type="email" required placeholder="you@example.com">
+            <div class="helper">We’ll send the ticket to this email.</div>
+          </div>
+
+          <div class="field full">
+            <label for="street">Street address *</label>
+            <input id="street" name="street" class="input-field" type="text" required placeholder="House no., Road, Area">
+          </div>
+
+          <div class="field full">
+            <label for="notes">Order notes (optional)</label>
+            <textarea id="notes" name="notes" class="input-field" rows="4" placeholder="Anything for the staff?"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ORDER SUMMARY CARD -->
+      <div class="card">
+        <h2>Your Order</h2>
+
+        <div class="summary-row">
+          <div class="label">Movie</div>
+          <div class="value" style="font-weight:700">
+            {% if movie %}{{ movie.title }}{% elif show %}{{ show.movie.title }}{% else %}Selected show{% endif %}
+          </div>
+        </div>
+
+        <div class="summary-row">
+          <div class="label">Seats</div>
+          <div id="seat-list">—</div>
+        </div>
+
+        <div class="summary-row">
+          <div class="label">Show time</div>
+          <div>{{ time }}</div>
+        </div>
+
+        <div class="summary-row">
+          <div class="label">Price (per)</div>
+          <div>${{ price_per_ticket }}</div>
+        </div>
+
+        <div class="total-box">
+          <div>Total</div>
+          <div id="total-display">${{ total_price }}</div>
+        </div>
+
+        <label class="terms">
+          <input id="terms" type="checkbox">
+          <span>I agree to the <a href="#" style="color:#ffdede">Terms & Conditions</a> *</span>
+        </label>
+
+        <!-- hidden fields to send to backend -->
+        <input type="hidden" name="seats" id="form-seats" value="{{ seats }}">
+        <input type="hidden" name="movie_id" value="{% if movie %}{{ movie.id }}{% elif show %}{{ show.movie.id }}{% endif %}">
+        <input type="hidden" name="time" value="{{ time }}">
+        <input type="hidden" name="date" value="{{ date }}">
+        <input type="hidden" name="show_id" value="{% if show %}{{ show.id }}{% else %}{{ request.GET.show_id|default:'' }}{% endif %}">
+        <input type="hidden" name="price_per_ticket" value="{{ price_per_ticket }}">
+
+        <button id="place-order" class="checkout-btn" type="submit" disabled>Place order</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+(function () {
+  // parse seats passed in context or querystring
+  function qp(name) { return new URLSearchParams(window.location.search).get(name); }
+  const seatsParam = ("{{ seats|default:'' }}").trim() || qp('seats') || '';
+  const seats = seatsParam ? seatsParam.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+  const seatListEl = document.getElementById('seat-list');
+  const formSeats = document.getElementById('form-seats');
+  const placeBtn = document.getElementById('place-order');
+
+  // inputs
+  const fullName = document.getElementById('full-name');
+  const phone = document.getElementById('phone');
+  const email = document.getElementById('email');
+  const street = document.getElementById('street');
+  const terms = document.getElementById('terms');
+
+  function updateSummary() {
+    seatListEl.textContent = seats.length ? seats.join(', ') : '—';
+    formSeats.value = seats.join(',');
+    // total display already computed server-side in template; keep it accurate if you want to recalc client-side
+  }
+
+  function validate() {
+    const ok =
+      seats.length > 0 &&
+      fullName.value.trim().length > 0 &&
+      phone.value.trim().length > 0 &&
+      email.value.trim().length > 0 &&
+      street.value.trim().length > 0 &&
+      terms.checked;
+    placeBtn.disabled = !ok;
+  }
+
+  // bind validation on input changes
+  [fullName, phone, email, street, terms].forEach(el => {
+    if (!el) return;
+    el.addEventListener('input', validate);
+    el.addEventListener('change', validate);
+  });
+
+  updateSummary();
+  validate();
+
+  // Submit via AJAX to preserve previous behavior
+  const form = document.getElementById('checkout-form');
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    if (placeBtn.disabled) {
+      Swal.fire({ icon:'warning', title:'Complete the form', text:'Please fill required fields and accept terms.'});
+      return;
+    }
+
+    const fd = new FormData(form);
+    try {
+      const resp = await fetch(form.action || window.location.href, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value },
+        body: fd,
+        credentials: 'same-origin'
+      });
+
+      if (!resp.ok) {
+        const txt = await resp.text();
+        console.error('Checkout failed', resp.status, txt);
+        Swal.fire({ icon:'error', title:'Booking failed', text:'Server error. Check console.' });
+        return;
+      }
+
+      const data = await resp.json();
+      if (data && data.success && data.ticket_url) {
+        Swal.fire({ icon:'success', title:'Booked!', text:'Redirecting to ticket...', showConfirmButton:false, timer:900 });
+        setTimeout(() => window.location.href = data.ticket_url, 900);
+      } else {
+        Swal.fire({ icon:'error', title:'Unexpected response', text:'No ticket URL returned.' });
+      }
+    } catch (err) {
+      console.error(err);
+      Swal.fire({ icon:'error', title:'Network error', text:'Please try again.' });
+    }
+  });
+
+})();
+</script>
+
+{% endblock %}

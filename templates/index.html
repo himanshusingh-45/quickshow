@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+{% block title %}TicketAdda - Home{% endblock %}
+
+{% block content %}
+<!-- === Hero Section === -->
+<div class="hero-container">
+    <div class="hero-background" style="background-image: url('{% static 'images/backgroundImage.png' %}');"></div>
+    <div class="hero-content">
+        <img src="{% static 'images/marvelLogo.svg' %}" alt="Marvel Studios" class="studio-logo">
+        <h1>Guardians <br>of the Galaxy</h1>
+        <div class="movie-meta">
+            <span>Action</span> | <span>Adventure</span> | <span>Sci-Fi</span> | <i class="far fa-calendar-alt"></i> 2018 | <i class="far fa-clock"></i> 2h 8m
+        </div>
+        <p>In a post-apocalyptic world where cities ride on wheels <br> and consume each other to survive, two people meet in <br>London and try to stop a conspiracy.</p>
+        <a href="{% url 'movies' %}" class="explore-btn">Explore Movies <i class="fas fa-arrow-right"></i></a>
+    </div>
+</div>
+
+<!-- === Featured Movies Section === -->
+<section class="featured-movies-section">
+    <div class="movie-grid-header">
+        <h2>Now Showing</h2>
+        <a href="{% url 'movies' %}" class="view-all-link">View All <i class="fas fa-arrow-right"></i></a>
+    </div>
+    <div class="movie-grid" id="movie-grid-home">
+        {% for movie in all_movies %}
+            <div class="movie-card {% if forloop.counter > 4 %}hidden-movie{% endif %}">
+                <div class="movie-poster">
+                    <img src="{{ movie.poster_url }}" alt="{{ movie.title }}">
+                </div>
+                <div class="movie-info">
+                    <h3>{{ movie.title }}</h3>
+                    <p class="meta">{{ movie.release_date.year }} &bull; {{ movie.genre }} &bull; {{ movie.duration_formatted }}</p>
+                    <div class="card-footer">
+                        <a href="{% url 'movie_detail' movie.id %}" class="buy-tickets-btn">Buy Tickets</a>
+                        <div class="rating">
+                            <i class="fas fa-star"></i>
+                            <span>{{ movie.rating }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <p style="text-align: center; color: #888; grid-column: 1 / -1;">No movies are currently available.</p>
+        {% endfor %}
+    </div>
+
+    {% if all_movies|length > 4 %}
+    <div class="show-more-container">
+        <button id="show-more-btn" class="show-more-btn">Show More</button>
+    </div>
+    {% endif %}
+</section>
+
+<!-- === Video Trailer Section === -->
+<section class="trailer-section">
+    <div class="trailer-header">
+        <h2>Trailers</h2>
+    </div>
+    <div class="trailer-container">
+        <div class="main-video-player">
+            {% comment %} <iframe id="main-trailer-video" src="https://www.youtube.com/embed/6ZfuNTqbHE8?si=MxtElBA5CKbBqFbo&modestbranding=1&showinfo=0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe> {% endcomment %}
+
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/7SlILk2WMTI?si=72tAKPwaNRjICMDz" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+        </div>
+        <div class="thumbnail-wrapper">
+            <div class="thumbnail-gallery">
+                <div class="thumbnail-item active" data-video-id="SODzP0b7DE4">
+                    <img src="https://img.youtube.com/vi/SODzP0b7DE4/mqdefault.jpg" alt="Trailer Thumbnail 1">
+                    <div class="play-icon"><i class="fas fa-play"></i></div>
+                </div>
+                <div class="thumbnail-item" data-video-id="t06RUxPbp_c">
+                    <img src="https://img.youtube.com/vi/t06RUxPbp_c/mqdefault.jpg" alt="Trailer Thumbnail 2">
+                    <div class="play-icon"><i class="fas fa-play"></i></div>
+                </div>
+                <div class="thumbnail-item" data-video-id="nb_fFj_0rq8">
+                   <img src="https://img.youtube.com/vi/nb_fFj_0rq8/mqdefault.jpg" alt="Trailer Thumbnail 3">
+                    <div class="play-icon"><i class="fas fa-play"></i></div>
+                </div>
+                <div class="thumbnail-item" data-video-id="u9Mv98Gr5pY">
+                    <img src="https://img.youtube.com/vi/u9Mv98Gr5pY/mqdefault.jpg" alt="Trailer Thumbnail 4">
+                    <div class="play-icon"><i class="fas fa-play"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }} {# THIS LINE IS THE FIX! It includes the navbar script from base.html #}
+
+<!-- Combined JavaScript for this specific page -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // --- Logic for "Show More" button ---
+        const showMoreBtn = document.getElementById('show-more-btn');
+        if (showMoreBtn) {
+            showMoreBtn.addEventListener('click', function() {
+                const hiddenMovies = document.querySelectorAll('#movie-grid-home .hidden-movie');
+                hiddenMovies.forEach(card => card.classList.remove('hidden-movie'));
+                showMoreBtn.parentElement.style.display = 'none';
+            });
+        }
+
+        // --- Logic for interactive trailer gallery ---
+        const thumbnails = document.querySelectorAll('.thumbnail-item');
+        const mainVideo = document.getElementById('main-trailer-video');
+        if (thumbnails.length > 0 && mainVideo) {
+            thumbnails.forEach(thumb => {
+                thumb.addEventListener('dblclick', function () {
+                    const videoId = this.getAttribute('data-video-id');
+                    mainVideo.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&modestbranding=1&showinfo=0`;
+                    
+                    const currentActive = document.querySelector('.thumbnail-item.active');
+                    if(currentActive) {
+                        currentActive.classList.remove('active');
+                    }
+                    this.classList.add('active');
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}
+

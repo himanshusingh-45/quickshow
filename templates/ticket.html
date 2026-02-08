@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Ticket{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/ticket.css' %}" />
+
+<div class="qs-ticket-wrapper">
+    {% if booking %}
+    <div class="qs-ticket-card">
+
+        <!-- HEADER -->
+        <div class="qs-ticket-header">
+            <img src="{% static 'images/logo.png' %}" class="qs-ticket-logo" alt="Logo">
+
+            <div class="qs-ticket-meta">
+                {{ booking.booking_time|date:"M j, Y, g:i A" }}<br>
+                <strong>Movie Ticket</strong>
+            </div>
+        </div>
+
+        <!-- BODY -->
+        <div class="qs-ticket-body">
+
+            <!-- Poster -->
+            <img src="{{ booking.movie.poster_url }}" class="qs-ticket-poster" alt="Poster">
+
+            <!-- Details -->
+            <div class="qs-ticket-details">
+                <h2 class="qs-ticket-title">{{ booking.movie.title }}</h2>
+
+                <p><strong>Show:</strong>
+                    {% if booking.show %}
+                        {{ booking.show.show_date|date:"F j, Y" }} • {{ booking.show.show_time|time:"g:i A" }}
+                    {% else %} N/A {% endif %}
+                </p>
+
+                <p><strong>Seats:</strong> {{ booking.seats }}</p>
+                <p><strong>Ticket #:</strong> {{ booking.ticket_number }}</p>
+            </div>
+
+            <!-- PRICE -->
+            <div class="qs-ticket-price">
+                <div class="qs-price-box">
+                    ₹{{ booking.total_price|floatformat:2 }}
+                </div>
+                <small>Booked: {{ booking.booking_time|date:"M j, Y" }}</small>
+            </div>
+
+        </div>
+
+        <!-- FOOTER -->
+        <div class="qs-ticket-footer">
+            <small>Show this ticket at the cinema entrance. Terms apply.</small>
+
+            <div class="qs-ticket-actions">
+                <a href="{% url 'my_bookings' %}" class="qs-btn">Back to Bookings</a>
+                <button id="download-btn" class="qs-btn primary">Download / Print</button>
+            </div>
+        </div>
+
+    </div>
+
+    {% else %}
+    <div class="qs-no-ticket">
+        <h3>No booking found</h3>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.getElementById("download-btn")?.addEventListener("click", () => window.print());
+</script>
+
+{% endblock %}
